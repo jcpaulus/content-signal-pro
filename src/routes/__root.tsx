@@ -38,7 +38,7 @@ export const Route = createRootRoute({
         content:
           "Find out if AI engines can find and recommend your B2B SaaS. Run a free Generative Engine Optimization audit in 60 seconds.",
       },
-      { property: "og:title", content: "ClearSignal — Is your website invisible to AI?" },
+      { property: "og:title", content: "ClearSignal — GEO Audit for B2B SaaS" },
       {
         property: "og:description",
         content:
@@ -46,6 +46,12 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "ClearSignal — GEO Audit for B2B SaaS" },
+      { name: "description", content: "ClearSignal AI audits B2B SaaS websites for AI visibility and provides actionable optimization insights." },
+      { property: "og:description", content: "ClearSignal AI audits B2B SaaS websites for AI visibility and provides actionable optimization insights." },
+      { name: "twitter:description", content: "ClearSignal AI audits B2B SaaS websites for AI visibility and provides actionable optimization insights." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1fb97865-078d-4069-967c-4990e9887172/id-preview-b3d02057--a3a0216d-ce70-4a3b-aafb-51b8ca0b7b4d.lovable.app-1776982165812.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1fb97865-078d-4069-967c-4990e9887172/id-preview-b3d02057--a3a0216d-ce70-4a3b-aafb-51b8ca0b7b4d.lovable.app-1776982165812.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
