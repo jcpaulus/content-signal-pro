@@ -1,6 +1,9 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-
 import appCss from "../styles.css?url";
+import { AppProvider } from "@/context/AppContext";
+import { Navbar } from "@/components/Navbar";
+import { ApiKeyModal } from "@/components/ApiKeyModal";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -29,19 +32,28 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "ClearSignal — GEO Audit for B2B SaaS" },
+      {
+        name: "description",
+        content:
+          "Find out if AI engines can find and recommend your B2B SaaS. Run a free Generative Engine Optimization audit in 60 seconds.",
+      },
+      { property: "og:title", content: "ClearSignal — Is your website invisible to AI?" },
+      {
+        property: "og:description",
+        content:
+          "60% of B2B buyers use AI to shortlist vendors before visiting your site. Find out if they can find you.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
       },
     ],
   }),
@@ -65,5 +77,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <AppProvider>
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
+      <ApiKeyModal />
+      <Toaster />
+    </AppProvider>
+  );
 }
