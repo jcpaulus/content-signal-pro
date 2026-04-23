@@ -45,29 +45,46 @@ Return only valid JSON. No markdown. No explanation. No backticks.
 Website content to analyze:
 `;
 
-const PROXIES = [
-  (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+type ProxyAttempt = {
+  make: (u: string) => string;
+  parse: (raw: string) => string;
+};
+
+const PROXIES: ProxyAttempt[] = [
+  {
+    make: (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    parse: (raw) => raw,
+  },
+  {
+    make: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    parse: (raw) => {
+      try {
+        const json = JSON.parse(raw) as { contents?: string };
+        return json.contents ?? "";
+      } catch {
+        return "";
+      }
+    },
+  },
 ];
 
-export async function fetchSiteContent(url: string): Promise<string> {
+export async function fetchSiteContent(url: string): Promise<string | null> {
   let normalized = url.trim();
   if (!/^https?:\/\//i.test(normalized)) normalized = "https://" + normalized;
 
-  let lastErr: unknown = null;
-  for (const make of PROXIES) {
+  for (const { make, parse } of PROXIES) {
     try {
       const res = await fetch(make(normalized));
-      if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
-      const html = await res.text();
+      if (!res.ok) continue;
+      const raw = await res.text();
+      const html = parse(raw);
+      if (!html) continue;
       return extractText(html).slice(0, 18000);
-    } catch (e) {
-      lastErr = e;
+    } catch {
+      // try next proxy
     }
   }
-  throw new Error(
-    `Could not fetch the website content. The site may block scrapers. (${(lastErr as Error)?.message ?? "unknown"})`
-  );
+  return null;
 }
 
 function extractText(html: string): string {
