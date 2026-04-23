@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useApp } from "@/context/AppContext";
 import { runAudit } from "@/lib/analyze";
-import { demoResult } from "@/lib/demoData";
+import { demoResult, demoCompetitorResult } from "@/lib/demoData";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { toast } from "sonner";
 import { Search, BarChart3, Wrench, ArrowRight, Sparkles } from "lucide-react";
@@ -19,10 +19,13 @@ function Landing() {
     apiKey,
     setKeyModalOpen,
     setResult,
+    setCompetitorResult,
     setAnalyzedUrl,
+    setCompetitorUrl,
     setIsDemo,
   } = useApp();
   const [url, setUrl] = useState("");
+  const [competitor, setCompetitor] = useState("");
   const [loading, setLoading] = useState(false);
 
   const onAnalyze = async () => {
@@ -37,10 +40,14 @@ function Landing() {
     }
     setLoading(true);
     setAnalyzedUrl(url);
+    setCompetitorUrl(competitor);
     setIsDemo(false);
     try {
-      const result = await runAudit(apiKey, url);
-      setResult(result);
+      const tasks: Promise<unknown>[] = [runAudit(apiKey, url)];
+      if (competitor.trim()) tasks.push(runAudit(apiKey, competitor));
+      const results = await Promise.all(tasks);
+      setResult(results[0] as Awaited<ReturnType<typeof runAudit>>);
+      setCompetitorResult(competitor.trim() ? (results[1] as Awaited<ReturnType<typeof runAudit>>) : null);
       navigate({ to: "/results" });
     } catch (e) {
       toast.error((e as Error).message || "Something went wrong. Please try again.");
@@ -50,7 +57,9 @@ function Landing() {
 
   const onDemo = () => {
     setResult(demoResult);
+    setCompetitorResult(demoCompetitorResult);
     setAnalyzedUrl(demoResult.url || "talentflowhr.example.com");
+    setCompetitorUrl(demoCompetitorResult.url || "peoplehub.example.com");
     setIsDemo(true);
     navigate({ to: "/results" });
   };
@@ -83,14 +92,22 @@ function Landing() {
             Find out if they can find you.
           </p>
 
-          <div className="mx-auto mt-10 flex max-w-xl flex-col gap-3 sm:flex-row">
+          <div className="mx-auto mt-10 flex max-w-xl flex-col gap-3">
             <Input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onAnalyze()}
               placeholder="Enter your website URL"
-              className="h-12 flex-1 text-base shadow-sm"
+              className="h-12 text-base shadow-sm"
+            />
+            <Input
+              type="url"
+              value={competitor}
+              onChange={(e) => setCompetitor(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onAnalyze()}
+              placeholder="Compare with competitor (optional)"
+              className="h-12 text-base shadow-sm"
             />
             <Button onClick={onAnalyze} size="lg" className="h-12 gap-2 px-6 text-base">
               Analyze My Site <ArrowRight className="h-4 w-4" />

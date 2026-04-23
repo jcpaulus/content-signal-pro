@@ -83,6 +83,15 @@ function ResultsPage() {
         </div>
       </section>
 
+      {competitorResult && (
+        <CompetitorCompare
+          you={result}
+          competitor={competitorResult}
+          yourUrl={analyzedUrl}
+          competitorUrl={competitorUrl}
+        />
+      )}
+
       {/* C — Simulator */}
       <section className="mb-12">
         <h2 className="mb-1 text-xl font-bold">AI visibility simulator</h2>
@@ -100,6 +109,9 @@ function ResultsPage() {
         </p>
         <ActionPlanList plan={result.action_plan} />
       </section>
+
+      {/* E — FAQ generator */}
+      <FaqGenerator audit={result} />
     </div>
   );
 }
