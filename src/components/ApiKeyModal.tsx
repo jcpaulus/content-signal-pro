@@ -13,7 +13,7 @@ export function ApiKeyModal() {
     if (keyModalOpen) setDraft(apiKey);
   }, [keyModalOpen, apiKey]);
 
-  const isValid = draft.startsWith("sk-ant-") && draft.length > 20;
+  const isValid = draft.trim().length > 0;
 
   return (
     <Dialog open={keyModalOpen} onOpenChange={setKeyModalOpen}>
