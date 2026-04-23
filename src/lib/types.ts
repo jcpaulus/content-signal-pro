@@ -20,6 +20,11 @@ export interface ActionPlan {
   this_month: string[];
 }
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface AuditResult {
   company?: string;
   url?: string;
@@ -28,4 +33,5 @@ export interface AuditResult {
   categories: Category[];
   simulator: SimulatorItem[];
   action_plan: ActionPlan;
+  faq?: FaqItem[];
 }
