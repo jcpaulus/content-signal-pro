@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AuditResult } from "./types";
+import type { AuditResult, FaqItem } from "./types";
 
 const PROMPT = `You are a GEO (Generative Engine Optimization) analyst.
 Analyze this website content and return ONLY a valid JSON object with this exact structure:
@@ -162,4 +162,50 @@ export async function runAudit(apiKey: string, url: string): Promise<AuditResult
   const parsed = JSON.parse(jsonStr) as AuditResult;
   parsed.url = url;
   return parsed;
+}
+
+const FAQ_PROMPT = `You are a GEO expert. Based on the following audit data for a company, generate exactly 10 FAQ questions and answers that an AI system (ChatGPT, Claude, Perplexity) could easily quote when buyers ask about this company or its category.
+
+Rules:
+- Each answer should be 2-3 sentences, factual, quotable, and self-contained.
+- Mix branded questions ("What is X?", "How much does X cost?") with category questions ("Best HRIS for SEA startups?").
+- Write answers as if they will be published verbatim on the company's FAQ page.
+- Return ONLY valid JSON in this exact shape, no markdown, no backticks:
+{ "faq": [ { "question": "...", "answer": "..." } ] }
+
+Audit data:
+`;
+
+export async function generateFaq(apiKey: string, audit: AuditResult): Promise<FaqItem[]> {
+  const summary = JSON.stringify(
+    {
+      company: audit.company,
+      url: audit.url,
+      verdict: audit.verdict,
+      categories: audit.categories.map((c) => ({
+        name: c.name,
+        score: c.score,
+        diagnosis: c.diagnosis,
+      })),
+      simulator: audit.simulator,
+    },
+    null,
+    2
+  );
+
+  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  const msg = await client.messages.create({
+    model: "claude-sonnet-4-5",
+    max_tokens: 3000,
+    messages: [{ role: "user", content: FAQ_PROMPT + summary }],
+  });
+  const textBlock = msg.content.find((b) => b.type === "text");
+  if (!textBlock || textBlock.type !== "text") throw new Error("Empty FAQ response.");
+  let raw = textBlock.text.trim();
+  if (raw.startsWith("```")) raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start === -1 || end === -1) throw new Error("Could not parse FAQ JSON.");
+  const parsed = JSON.parse(raw.slice(start, end + 1)) as { faq: FaqItem[] };
+  return parsed.faq;
 }
