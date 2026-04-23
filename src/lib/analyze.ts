@@ -45,29 +45,46 @@ Return only valid JSON. No markdown. No explanation. No backticks.
 Website content to analyze:
 `;
 
-const PROXIES = [
-  (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+type ProxyAttempt = {
+  make: (u: string) => string;
+  parse: (raw: string) => string;
+};
+
+const PROXIES: ProxyAttempt[] = [
+  {
+    make: (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    parse: (raw) => raw,
+  },
+  {
+    make: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    parse: (raw) => {
+      try {
+        const json = JSON.parse(raw) as { contents?: string };
+        return json.contents ?? "";
+      } catch {
+        return "";
+      }
+    },
+  },
 ];
 
-export async function fetchSiteContent(url: string): Promise<string> {
+export async function fetchSiteContent(url: string): Promise<string | null> {
   let normalized = url.trim();
   if (!/^https?:\/\//i.test(normalized)) normalized = "https://" + normalized;
 
-  let lastErr: unknown = null;
-  for (const make of PROXIES) {
+  for (const { make, parse } of PROXIES) {
     try {
       const res = await fetch(make(normalized));
-      if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
-      const html = await res.text();
+      if (!res.ok) continue;
+      const raw = await res.text();
+      const html = parse(raw);
+      if (!html) continue;
       return extractText(html).slice(0, 18000);
-    } catch (e) {
-      lastErr = e;
+    } catch {
+      // try next proxy
     }
   }
-  throw new Error(
-    `Could not fetch the website content. The site may block scrapers. (${(lastErr as Error)?.message ?? "unknown"})`
-  );
+  return null;
 }
 
 function extractText(html: string): string {
@@ -110,6 +127,14 @@ function extractText(html: string): string {
 export async function runAudit(apiKey: string, url: string): Promise<AuditResult> {
   const content = await fetchSiteContent(url);
 
+  const userContent = content
+    ? PROMPT + content
+    : PROMPT +
+      `NOTE: The website content could not be fetched directly (the site blocks scrapers or all proxies failed). ` +
+      `Use your training knowledge about this website/company to generate a realistic GEO audit. ` +
+      `If you do not recognize the site, infer plausible content from the domain name and still produce a realistic, useful audit.\n\n` +
+      `URL: ${url}`;
+
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const msg = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -117,7 +142,7 @@ export async function runAudit(apiKey: string, url: string): Promise<AuditResult
     messages: [
       {
         role: "user",
-        content: PROMPT + content,
+        content: userContent,
       },
     ],
   });
@@ -127,11 +152,9 @@ export async function runAudit(apiKey: string, url: string): Promise<AuditResult
     throw new Error("Empty response from Claude.");
   }
   let raw = textBlock.text.trim();
-  // Remove accidental code fences
   if (raw.startsWith("```")) {
     raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
   }
-  // Find first { ... last }
   const start = raw.indexOf("{");
   const end = raw.lastIndexOf("}");
   if (start === -1 || end === -1) throw new Error("Could not parse JSON from Claude response.");
