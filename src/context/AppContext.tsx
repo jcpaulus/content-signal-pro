@@ -6,8 +6,12 @@ interface AppContextValue {
   setApiKey: (k: string) => void;
   result: AuditResult | null;
   setResult: (r: AuditResult | null) => void;
+  competitorResult: AuditResult | null;
+  setCompetitorResult: (r: AuditResult | null) => void;
   analyzedUrl: string;
   setAnalyzedUrl: (u: string) => void;
+  competitorUrl: string;
+  setCompetitorUrl: (u: string) => void;
   isDemo: boolean;
   setIsDemo: (b: boolean) => void;
   keyModalOpen: boolean;
@@ -19,7 +23,9 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKey] = useState("");
   const [result, setResult] = useState<AuditResult | null>(null);
+  const [competitorResult, setCompetitorResult] = useState<AuditResult | null>(null);
   const [analyzedUrl, setAnalyzedUrl] = useState("");
+  const [competitorUrl, setCompetitorUrl] = useState("");
   const [isDemo, setIsDemo] = useState(false);
   const [keyModalOpen, setKeyModalOpen] = useState(false);
 
@@ -30,8 +36,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setApiKey,
         result,
         setResult,
+        competitorResult,
+        setCompetitorResult,
         analyzedUrl,
         setAnalyzedUrl,
+        competitorUrl,
+        setCompetitorUrl,
         isDemo,
         setIsDemo,
         keyModalOpen,

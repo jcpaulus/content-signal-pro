@@ -5,6 +5,8 @@ import { ScoreCircle } from "@/components/ScoreCircle";
 import { CategoryCard } from "@/components/CategoryCard";
 import { SimulatorPanel } from "@/components/SimulatorPanel";
 import { ActionPlanList } from "@/components/ActionPlanList";
+import { CompetitorCompare } from "@/components/CompetitorCompare";
+import { FaqGenerator } from "@/components/FaqGenerator";
 import { Button } from "@/components/ui/button";
 import { exportPdf } from "@/lib/pdf";
 import { Download, ArrowLeft } from "lucide-react";
@@ -20,7 +22,7 @@ function verdictColor(score: number) {
 }
 
 function ResultsPage() {
-  const { result, analyzedUrl, isDemo } = useApp();
+  const { result, competitorResult, analyzedUrl, competitorUrl, isDemo } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -83,6 +85,15 @@ function ResultsPage() {
         </div>
       </section>
 
+      {competitorResult && (
+        <CompetitorCompare
+          you={result}
+          competitor={competitorResult}
+          yourUrl={analyzedUrl}
+          competitorUrl={competitorUrl}
+        />
+      )}
+
       {/* C — Simulator */}
       <section className="mb-12">
         <h2 className="mb-1 text-xl font-bold">AI visibility simulator</h2>
@@ -100,6 +111,9 @@ function ResultsPage() {
         </p>
         <ActionPlanList plan={result.action_plan} />
       </section>
+
+      {/* E — FAQ generator */}
+      <FaqGenerator audit={result} />
     </div>
   );
 }
